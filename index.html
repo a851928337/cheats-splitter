@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>nxCheat Picker (Web)</title>
+    <link rel="stylesheet" href="./css/styles.css" />
+  </head>
+
+  <body data-theme="light">
+    <div class="wrap">
+      <div class="topbar">
+        <h1>nxCheat Picker (Web)</h1>
+        <button class="btn" id="themeBtn" title="切换深色/浅色">🔆</button>
+      </div>
+
+      <div class="grid">
+        <div class="card">
+          <div class="row">
+            <label for="buildId">Build ID</label>
+            <input id="buildId" type="text" placeholder="例如：0100F2C0115B6000（可自动从文件名提取）" />
+          </div>
+
+          <div class="row">
+            <label>输入方式</label>
+            <div class="filepick">
+              <label class="btn" for="fileInput">选择 .txt 文件</label>
+              <input id="fileInput" type="file" accept=".txt,text/plain" />
+              <span class="small">或把文件拖到下面区域</span>
+            </div>
+          </div>
+
+          <!-- Cheat Text 顶部工具条 + 展开 -->
+          <div class="panelHeader">
+            <div class="panelTitle">Cheat Text</div>
+            <button class="btn mini" id="expandTextBtn">展开</button>
+          </div>
+
+          <textarea id="cheatText" spellcheck="false"></textarea>
+
+          <div id="dropZone" class="drop">
+            <div>
+              <div class="dropTitle">拖拽 .txt 到这里</div>
+              <div class="muted">文件名建议是 BUILDID.txt（会自动提取 Build ID）</div>
+            </div>
+            <div class="muted">支持拖拽 / 粘贴</div>
+          </div>
+
+          <div class="hint">
+            格式要求：每段以 <code>[Cheat Name]</code> 作为标题，下面是该 Cheat 的代码块。<br />
+            <code>[SectionStart]</code> / <code>[SectionEnd]</code> 会被自动忽略（与 Python 版一致）。
+            <br />
+            列表支持：点击整行勾选；<b>Shift + 点击</b> 批量选择范围。
+          </div>
+
+          <!-- Cheat Blocks 顶部工具条 + 展开 -->
+          <div class="panelHeader">
+            <div class="panelTitle">Cheat Blocks</div>
+            <button class="btn mini" id="expandBlocksBtn">展开</button>
+          </div>
+
+          <!-- 工具条+列表整体包进 cheatPanel，展开时移动整个 panel -->
+          <div id="cheatPanel">
+            <div class="cheatToolbar">
+              <div class="cheatToolbarLeft">
+                <label class="checkbox muted" style="gap: 8px">
+                  <input id="masterCheck" type="checkbox" />
+                  全选
+                </label>
+                <div class="muted" id="cheatCount">0 blocks</div>
+              </div>
+
+              <div class="cheatToolbarRight">
+                <input id="filterInput" class="filterInput" type="text" placeholder="Filter by name..." />
+
+                <!-- ✅ 新增：全选作用范围 -->
+                <label class="checkbox muted" style="gap: 8px">
+                  <input id="applyToFiltered" type="checkbox" checked />
+                  全选仅作用于过滤结果
+                </label>
+
+                <button class="btn" id="refreshListBtn">Refresh</button>
+              </div>
+            </div>
+
+            <div id="cheatList" class="cheatList"></div>
+          </div>
+
+          <div class="actions">
+            <label class="checkbox">
+              <input id="includeName" type="checkbox" checked />
+              输出文件包含 [Cheat Name]
+            </label>
+
+            <button class="btn danger" id="clearBtn">Clear</button>
+            <button class="btn primary" id="zipBtn">Generate ZIP</button>
+          </div>
+
+          <div id="status" class="status"></div>
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="./js/main.js"></script>
+  </body>
+</html>
