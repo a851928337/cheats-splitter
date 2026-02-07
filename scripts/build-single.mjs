@@ -12,33 +12,49 @@ if (!fs.existsSync(distHtmlPath)) {
 
 let html = fs.readFileSync(distHtmlPath, 'utf-8');
 
-// 把引用的 css/js 读出来并内联
-function readDistFile(relOrAbs) {
-  const rel = relOrAbs.replace(/^\.\//, '').replace(/^\/+/, '');
+function readDistFile(hrefOrSrc) {
+  const rel = hrefOrSrc.replace(/^\.\//, '').replace(/^\/+/, '');
   const abs = path.join(distDir, rel);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`Missing asset: ${rel}`);
+  }
   return fs.readFileSync(abs, 'utf-8');
 }
 
-// 1) 内联所有 css link
-// 匹配：<link rel="stylesheet" href="./assets/xxx.css">
-html = html.replace(/<link\s+rel="stylesheet"\s+href="([^"]+)"\s*\/?>/g, (_m, href) => {
+/* --------------------------------------------------
+ * 1) 移除 modulepreload（单文件不需要）
+ * -------------------------------------------------- */
+html = html.replace(/<link\s+[^>]*rel=["']modulepreload["'][^>]*>\s*/gi, '');
+
+/* --------------------------------------------------
+ * 2) 内联所有 CSS
+ *    匹配任意属性顺序的 <link rel="stylesheet" href="...">
+ * -------------------------------------------------- */
+html = html.replace(/<link\s+[^>]*rel=["']stylesheet["'][^>]*href=["']([^"']+)["'][^>]*>/gi, (_match, href) => {
   const css = readDistFile(href);
-  return `<style>\n${css}\n</style>`;
+  return `<!-- inline css: ${href} -->\n<style>\n${css}\n</style>`;
 });
 
-// 2) 内联所有 module script
-// 匹配：<script type="module" crossorigin src="./assets/xxx.js"></script>
-// 或： <script type="module" src="./assets/xxx.js"></script>
-html = html.replace(/<script\s+type="module"[^>]*src="([^"]+)"[^>]*>\s*<\/script>/g, (_m, src) => {
-  const js = readDistFile(src);
-  return `<script>\n${js}\n</script>`;
-});
+/* --------------------------------------------------
+ * 3) 内联所有 module script
+ * -------------------------------------------------- */
+html = html.replace(
+  /<script\s+[^>]*type=["']module["'][^>]*src=["']([^"']+)["'][^>]*>\s*<\/script>/gi,
+  (_match, src) => {
+    const js = readDistFile(src);
+    return `<!-- inline js: ${src} -->\n<script>\n${js}\n</script>`;
+  }
+);
 
-// 3) 可选：移除 base tag（如果存在）
-html = html.replace(/<base[^>]*>/g, '');
+/* --------------------------------------------------
+ * 4) 移除 <base>（避免 file:// 下路径异常）
+ * -------------------------------------------------- */
+html = html.replace(/<base[^>]*>\s*/gi, '');
 
-// 4) 给 single.html 加个标记注释
-html = html.replace(/<\/head>/, `  <!-- generated: single.html (all js/css inlined) -->\n</head>`);
+/* --------------------------------------------------
+ * 5) 标记
+ * -------------------------------------------------- */
+html = html.replace(/<\/head>/i, `  <!-- generated: single.html (all js + css inlined, no minify) -->\n</head>`);
 
 fs.writeFileSync(outPath, html, 'utf-8');
 
